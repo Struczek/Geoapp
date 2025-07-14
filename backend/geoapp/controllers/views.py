@@ -1,35 +1,16 @@
-from pyramid.view import (
-    view_config,
-    view_defaults
-    )
+from pyramid.view import view_config, view_defaults
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
-from backend.geoapp.services.db_service import get_features
+from geoapp.services.db_service import DbServices
 from geoapp.models.registry import MODEL_REGISTRY
-from pyramid.response import Response
-from geoapp.models.models import DBSession, Base
-
-class TutorialViews:
-    def __init__(self, request):
-        self.request = request
-
-    @view_config(route_name='home')
-    def home(self):
-        return Response('<body>Hello World</body>')
+from geoapp.models.models import DBSession
 
 
-
-@view_defaults(renderer='json')
+@view_defaults(renderer="json")
 class GeoJsonViews:
     def __init__(self, request):
         self.request = request
 
-    @view_config(route_name='geojson_generic', request_method='GET')
-    def geojson_view(self):
-        model_name = self.request.matchdict.get("model")
-        model = MODEL_REGISTRY.get(model_name)
-        if not model:
-            raise HTTPNotFound(f"Model '{model_name}' not found.")
-        
+    def get_filters(self, model):
         filters = {}
         invalid_filters = []
 
@@ -40,11 +21,34 @@ class GeoJsonViews:
                 invalid_filters.append(key)
 
         if invalid_filters:
-            raise HTTPBadRequest(f"Invalid filter parameters: {', '.join(invalid_filters)}.")
+            raise HTTPBadRequest(
+                f"Invalid filter parameters: {', '.join(invalid_filters)}."
+            )
 
+        return filters
 
-        return get_features(
-            session=DBSession,
-            model=model,
-            filters=filters
+    def fetch_data(self, model, filters):
+        db_services = DbServices(DBSession, model, filters)
+        return db_services.get_features()
+
+    @view_config(route_name="geojson_generic", request_method="GET")
+    def geojson_view(self):
+        model_name = self.request.matchdict.get("model")
+        model = MODEL_REGISTRY.get(model_name)
+
+        if not model:
+            raise HTTPNotFound(f"Model '{model_name}' not found.")
+
+        filters = self.get_filters(model)
+        data = self.fetch_data(model, filters)
+
+        # Set CORS headers
+        self.request.response.headers.update(
+            {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            }
         )
+
+        return data
