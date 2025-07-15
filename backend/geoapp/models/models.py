@@ -10,13 +10,14 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.dialects.postgresql import TSTZRANGE
-from sqlalchemy.orm import Mapped, mapped_column
 import datetime
 import decimal
-from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
+    Mapped, 
+    mapped_column,
+    declarative_base,
 )
 from zope.sqlalchemy import register
 

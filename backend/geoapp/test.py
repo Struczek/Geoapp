@@ -10,12 +10,12 @@ class DatabaselViewTests(unittest.TestCase):
         testing.tearDown()
 
     def test_db(self):
-        from geoapp.controllers.views import GeoJsonViews
+        from geoapp.controllers.db_controller import DbController
 
         request = testing.DummyRequest()
         request.matchdict = {"model": "nyc_subway_stations"}
-        inst = GeoJsonViews(request)
-        res = inst.geojson_view()
+        inst = DbController(request)
+        res = inst.db_view()
         assert res["type"] == "FeatureCollection"
 
 

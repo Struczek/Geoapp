@@ -2,8 +2,6 @@ from geoapp.models.models import (
     NycCensusBlocks,
     NycHomicides,
     NycNeighborhoods,
-)
-from geoapp.models.models import (
     NycStreets,
     NycStreetsHistory,
     NycSubwayStationEvents,
