@@ -17,40 +17,6 @@ class DbController:
         self.request = request
         self.db_service = DbServices(DBSession)
 
-    def get_filters(self, model):
-        """
-        Extracts valid filter parameters from the request and checks them against
-        the given model. Returns a dictionary of valid filters. If any invalid
-        filters are provided, an HTTPBadRequest is raised.
-
-        Args:
-            model (SQLAlchemy model): The model class against which filter keys will be validated.
-                        Each key in the filter dictionary must be an attribute of the model.
-
-        Raises:
-            HTTPBadRequest: If any filter parameter does not correspond to an attribute
-                            of the given model.
-
-        Returns:
-            dict: A dictionary of valid filter parameters where keys are model attribute
-                names and values are the corresponding filter values.
-        """
-        filters = {}
-        invalid_filters = []
-
-        for key, value in self.request.params.items():
-            if hasattr(model, key):
-                filters[key] = value
-            else:
-                invalid_filters.append(key)
-
-        if invalid_filters:
-            raise HTTPBadRequest(
-                f"Invalid filter parameters: {', '.join(invalid_filters)}."
-            )
-
-        return filters
-
     @view_config(
         route_name="db_controller.db_view",
         request_method="GET",
@@ -86,3 +52,38 @@ class DbController:
         )
 
         return data
+    
+    def get_filters(self, model):
+        """
+        Extracts valid filter parameters from the request and checks them against
+        the given model. Returns a dictionary of valid filters. If any invalid
+        filters are provided, an HTTPBadRequest is raised.
+
+        Args:
+            model (SQLAlchemy model): The model class against which filter keys will be validated.
+                        Each key in the filter dictionary must be an attribute of the model.
+
+        Raises:
+            HTTPBadRequest: If any filter parameter does not correspond to an attribute
+                            of the given model.
+
+        Returns:
+            dict: A dictionary of valid filter parameters where keys are model attribute
+                names and values are the corresponding filter values.
+        """
+        filters = {}
+        invalid_filters = []
+
+        for key, value in self.request.params.items():
+            if hasattr(model, key):
+                filter = getattr(model, key)
+                filters[key] = value
+            else:
+                invalid_filters.append(key)
+
+        if invalid_filters:
+            raise HTTPBadRequest(
+                f"Invalid filter parameters: {', '.join(invalid_filters)}."
+            )
+
+        return filters
