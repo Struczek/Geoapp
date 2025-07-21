@@ -53,6 +53,47 @@ class DbController:
 
         return data
     
+    @view_config(
+        route_name="db_controller.spatial_data_view",
+        request_method="GET",
+        renderer="json",
+    )
+    def spatial_data_view(self):
+        """
+        Handles a GET request to retrieve spatial information for a given point (x, y) in EPSG:3857.
+
+        Expects 'x' and 'y' parameters in the query string. If valid, returns spatial data
+        such as neighborhood name, borough name, number of nearby homicides, and the nearest subway station.
+
+        Raises:
+            HTTPBadRequest: If 'x' or 'y' parameter is missing or cannot be converted to float.
+
+        Returns:
+            dict: JSON-serializable dictionary containing spatial data:
+                - name (str): Name of the neighborhood.
+                - boroname (str): Name of the borough.
+                - number_of_homicides (int): Number of homicides near the point.
+                - station_name (str): Nearest subway station name.
+                - distance_meters (float): Distance to the nearest station in meters.
+        """
+        try:
+            x = float(self.request.params.get('x'))
+            y = float(self.request.params.get('y'))
+        except (TypeError, ValueError):
+             raise HTTPBadRequest("Invalid or missing lat/lon")
+
+        data = self.db_service.get_spatial_data(x, y)
+
+        self.request.response.headers.update(
+            {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            }
+        )
+
+        return data
+    
     def get_filters(self, model):
         """
         Extracts valid filter parameters from the request and checks them against
@@ -76,7 +117,6 @@ class DbController:
 
         for key, value in self.request.params.items():
             if hasattr(model, key):
-                filter = getattr(model, key)
                 filters[key] = value
             else:
                 invalid_filters.append(key)
