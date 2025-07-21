@@ -33,9 +33,7 @@ class DbServices:
         columns = subquery_properties.c
         json_fields = []
 
-        # Builds a flat list of alternating key-value pairs (column name and column object)
-        # for all columns except the geometry columns. This list is used to construct
-        # the "properties" object in each GeoJSON Feature using jsonb_build_object.
+        # Skip geometry columns to include only non-geometry fields in GeoJSON properties
         for col in columns:
             if col.name != "geom" and col.name != "geom_invalid":
                 json_fields.extend([col.name, col])
