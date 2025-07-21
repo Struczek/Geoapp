@@ -52,7 +52,7 @@ class DbController:
         )
 
         return data
-    
+
     def get_filters(self, model):
         """
         Extracts valid filter parameters from the request and checks them against
@@ -76,7 +76,6 @@ class DbController:
 
         for key, value in self.request.params.items():
             if hasattr(model, key):
-                filter = getattr(model, key)
                 filters[key] = value
             else:
                 invalid_filters.append(key)
