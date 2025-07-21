@@ -34,9 +34,7 @@ class DbServices:
         columns = subquery_properties.c
         json_fields = []
 
-        # Builds a flat list of alternating key-value pairs (column name and column object)
-        # for all columns except the geometry columns. This list is used to construct
-        # the "properties" object in each GeoJSON Feature using jsonb_build_object.
+        # Skip geometry columns to include only non-geometry fields in GeoJSON properties
         for col in columns:
             if col.name != "geom" and col.name != "geom_invalid":
                 json_fields.extend([col.name, col])
@@ -69,20 +67,7 @@ class DbServices:
 
     def get_spatial_data(self, x, y):
         """
-        Retrieves spatial information for a given coordinate in EPSG:3857 (Web Mercator),
-        including neighborhood details, number of nearby homicides, and proximity to the nearest subway station.
-
-        Args:
-            x (float): X-coordinate (easting) in EPSG:3857.
-            y (float): Y-coordinate (northing) in EPSG:3857.
-
-        Returns:
-            dict: A dictionary containing:
-                - name (str): Name of the neighborhood the point falls within.
-                - boroname (str): Name of the borough the point falls within.
-                - number_of_homicides (int): Number of homicides near the point.
-                - station_name (str): Name of the nearest subway station.
-                - distance_meters (float): Distance to the nearest subway station in meters.
+        Retrieves spatial information for a given coordinate in EPSG:3857.
         """
         point_geom = self._make_transformed_point(x, y)
         name, boroname = self._get_neighborhood(point_geom)
@@ -100,29 +85,12 @@ class DbServices:
     def _make_transformed_point(self, x, y):
         """
         Creates a point geometry from coordinates in EPSG:3857 and transforms it to EPSG:26918.
-
-        Args:
-            x (float): X-coordinate (easting) in EPSG:3857.
-            y (float): Y-coordinate (northing) in EPSG:3857.
-
-        Returns:
-            sqlalchemy.sql.functions.Function: SQLAlchemy expression representing the transformed geometry point in EPSG:26918.
         """
         return func.ST_Transform(func.ST_SetSRID(func.ST_MakePoint(x, y), 3857), 26918)
 
     def _get_neighborhood(self, point_geom):
         """
         Finds the neighborhood and borough that contain the given geometry point.
-
-        The input geometry is expected to be in EPSG:26918 (e.g., created using `_make_transformed_point`).
-
-        Args:
-            point_geom (sqlalchemy.sql.functions.Function): A geometry point in EPSG:26918.
-
-        Returns:
-            tuple:
-                - name (str or None): Name of the neighborhood containing the point, or None if not found.
-                - boroname (str or None): Name of the borough containing the point, or None if not found.
         """
         stmt = select(NycNeighborhoods.name, NycNeighborhoods.boroname).where(
             func.ST_Intersects(NycNeighborhoods.geom, point_geom)
@@ -139,16 +107,6 @@ class DbServices:
     def _count_homicides_nearby(self, point_geom, radius=100):
         """
         Counts the number of homicides within a specified distance from the given point geometry.
-
-        The input geometry is expected to be in EPSG:26918 (e.g., created using `_make_transformed_point`).
-        The search is performed using a radial buffer defined by `radius` in meters.
-
-        Args:
-            point_geom (sqlalchemy.sql.functions.Function): Geometry point in EPSG:26918.
-            radius (int, optional): Search radius in meters. Defaults to 100.
-
-        Returns:
-            int: Number of homicide incidents within the given radius of the point.
         """
         stmt = (
             select(func.count())
@@ -161,31 +119,20 @@ class DbServices:
     def _get_nearest_subway_station(self, point_geom):
         """
         Finds the nearest subway station to the given geometry point and returns its name and distance.
-
-        The input geometry is expected to be in EPSG:26918 (e.g., created using `_make_transformed_point`).
-        Uses a spatial index operator for efficient nearest-neighbor search.
-
-        Args:
-            point_geom (sqlalchemy.sql.functions.Function): Geometry point in EPSG:26918.
-
-        Returns:
-            tuple:
-                - name (str or None): Name of the nearest subway station, or None if not found.
-                - distance (float or None): Distance to the station in meters, rounded to two decimal places,
-                or None if not found.
         """
         stmt = (
             select(
                 NycSubwayStations.name,
                 func.ST_Distance(NycSubwayStations.geom, point_geom).label("distance"),
-            )
-            .order_by(NycSubwayStations.geom.op("<->")(point_geom))
+            ).order_by(NycSubwayStations.geom.op("<->")(point_geom))
+            # Only fetch the closest station
             .limit(1)
         )
         result = self.session.execute(stmt).first()
 
         if result:
             name, distance = result
+            # Round the distance for readability
             distance = round(distance, 2)
         else:
             name, distance = None, None

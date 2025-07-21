@@ -1,40 +1,4 @@
 import unittest
-from pyramid import testing
-from sqlalchemy import create_engine
-from geoapp.models.models import DBSession
-
-
-class DatabaselViewTests(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-        engine = create_engine(
-            "postgresql+psycopg2://postgres:admin@localhost:5432/nyc"
-        )
-        DBSession.configure(bind=engine)
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def test_db(self):
-        from geoapp.controllers.db_controller import DbController
-
-        request = testing.DummyRequest()
-        request.matchdict = {"model": "nyc_subway_stations"}
-        inst = DbController(request)
-        res = inst.db_view()
-        assert res["type"] == "FeatureCollection"
-
-    def test_db_with_gid_param(self):
-        from geoapp.controllers.db_controller import DbController
-
-        request = testing.DummyRequest(params={"gid": "1"})
-        request.matchdict = {"model": "nyc_subway_stations"}
-        inst = DbController(request)
-        res = inst.db_view()
-        assert res["type"] == "FeatureCollection"
-        assert len(res["features"]) == 1
-        assert res["features"][0]["properties"]["gid"] == 1
 
 
 class DatabaseFunctionalTests(unittest.TestCase):
@@ -63,3 +27,17 @@ class DatabaseFunctionalTests(unittest.TestCase):
         data = json.loads(res.body)
         assert len(data["features"]) == 1
         assert data["features"][0]["properties"]["gid"] == 1
+
+    def test_spatial_data_view(self):
+        res = self.testapp.get(
+            "/api/spatial_data?x=-8239434.211335423&y=4955524.41983333", status=200
+        )
+        self.assertIn(b"name", res.body)
+        self.assertIn(b"boroname", res.body)
+        self.assertIn(b"station_name", res.body)
+        self.assertIn(b"number_of_homicides", res.body)
+        self.assertIn(b"distance_meters", res.body)
+
+    def test_spatial_data_view_invalid_coords(self):
+        res = self.testapp.get("/api/spatial_data?x=abc&y=4507520.0", status=400)
+        self.assertIn(b"Invalid or missing x,y", res.body)
