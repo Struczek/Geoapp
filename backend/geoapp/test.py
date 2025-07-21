@@ -62,6 +62,4 @@ class DatabaseFunctionalTests(unittest.TestCase):
 
         data = json.loads(res.body)
         assert len(data["features"]) == 1
-
-        feature = data["features"][0]
-        assert feature["properties"]["gid"] == 1
+        assert data["features"][0]["properties"]["gid"] == 1
