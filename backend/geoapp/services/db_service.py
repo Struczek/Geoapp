@@ -70,13 +70,12 @@ class DbServices:
         Retrieves spatial information for a given coordinate in EPSG:3857.
         """
         point_geom = self._make_transformed_point(x, y)
-        name, boroname = self._get_neighborhood(point_geom)
+        neighborhood = self._get_neighborhood(point_geom)
         number_of_homicides = self._count_homicides_nearby(point_geom)
         station_name, distance_meters = self._get_nearest_subway_station(point_geom)
 
         return {
-            "name": name,
-            "boroname": boroname,
+            "neighborhood": neighborhood,
             "number_of_homicides": number_of_homicides,
             "station_name": station_name,
             "distance_meters": distance_meters,
@@ -95,18 +94,24 @@ class DbServices:
         stmt = select(NycNeighborhoods.name, NycNeighborhoods.boroname).where(
             func.ST_Intersects(NycNeighborhoods.geom, point_geom)
         )
-        result = self.session.execute(stmt).first()
+        result = self.session.execute(stmt).all()
+        neighborhoods = []
 
         if result:
-            name, boroname = result
-        else:
-            name, boroname = None, None
+            for row in result:
+                # Check if the neighborhood data is complete
+                if row.name is None or row.boroname is None:
+                    print(
+                        f"WARNING: Incomplete neighborhood data: name={row.name!r}, boroname={row.boroname!r}"
+                    )
+                neighborhoods.append({"name": row.name, "boroname": row.boroname})
 
-        return name, boroname
+        return neighborhoods
 
     def _count_homicides_nearby(self, point_geom, radius=100):
         """
         Counts the number of homicides within a specified distance from the given point geometry.
+        The default value of radius is 100 meters.
         """
         stmt = (
             select(func.count())
@@ -132,8 +137,9 @@ class DbServices:
 
         if result:
             name, distance = result
-            # Round the distance for readability
-            distance = round(distance, 2)
+            # Check if the subway data is complete
+            if name is None:
+                print(f"WARNING: Incomplete subway data.")
         else:
             name, distance = None, None
 
