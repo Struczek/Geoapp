@@ -132,10 +132,7 @@ class DbServices:
         result = self.session.execute(stmt).first()
 
         if result:
-            response = {
-                "subway_gid":result.gid,
-                "subway_distance":result.distance
-            }
+            response = {"subway_gid": result.gid, "subway_distance": result.distance}
         else:
             response = None
 

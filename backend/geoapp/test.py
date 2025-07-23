@@ -34,7 +34,7 @@ class DatabaseFunctionalTests(unittest.TestCase):
         data = json.loads(res.body)
         assert data["neighborhood"][0]["neighborhood_gid"] == 72
         assert data["number_of_homicides"] == 0
-        assert data["subway"]["subway_gid"] == 98 
+        assert data["subway"]["subway_gid"] == 98
         assert abs(data["subway"]["subway_distance"] - 1293.1) < 0.5
 
     def test_spatial_data_view_invalid_coords(self):
@@ -48,5 +48,5 @@ class DatabaseFunctionalTests(unittest.TestCase):
         data = json.loads(res.body)
         assert data["neighborhood"] == None
         assert data["number_of_homicides"] == 0
-        assert data["subway"]["subway_gid"] == 478 
+        assert data["subway"]["subway_gid"] == 478
         assert abs(data["subway"]["subway_distance"] - 741470.2135) < 0.5
