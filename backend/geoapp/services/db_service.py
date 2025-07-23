@@ -88,7 +88,7 @@ class DbServices:
 
     def _get_neighborhood(self, point_geom):
         """
-        Finds the neighborhood and borough that contain the given geometry point.
+        Returns GIDs of neighborhoods that contain the given point geometry, or None if not found.
         """
         stmt = select(NycNeighborhoods.gid).where(
             func.ST_Intersects(NycNeighborhoods.geom, point_geom)
@@ -119,7 +119,7 @@ class DbServices:
 
     def _get_nearest_subway_station(self, point_geom):
         """
-        Finds the nearest subway station to the given geometry point and returns its name and distance.
+        Returns the GID and distance in meters of the nearest subway station to the given point geometry.
         """
         stmt = (
             select(
