@@ -1,4 +1,5 @@
 import unittest
+import json
 
 
 class DatabaseFunctionalTests(unittest.TestCase):
@@ -22,8 +23,6 @@ class DatabaseFunctionalTests(unittest.TestCase):
     def test_db_with_gid_param(self):
         res = self.testapp.get("/api/nyc_subway_stations/geojson?gid=1", status=200)
         self.assertIn(b"FeatureCollection", res.body)
-        import json
-
         data = json.loads(res.body)
         assert len(data["features"]) == 1
         assert data["features"][0]["properties"]["gid"] == 1
@@ -32,14 +31,11 @@ class DatabaseFunctionalTests(unittest.TestCase):
         res = self.testapp.get(
             "/api/spatial_data?x=-8239434.211335423&y=4955524.41983333", status=200
         )
-        import json
-
         data = json.loads(res.body)
-        assert data["neighborhood"][0]["name"] == "Dyker Heights"
-        assert data["neighborhood"][0]["boroname"] == "Brooklyn"
+        assert data["neighborhood"][0]["neighborhood_gid"] == 72
         assert data["number_of_homicides"] == 0
-        assert data["station_name"] == "95th St"
-        assert abs(data["distance_meters"] - 1293.1) < 0.5
+        assert data["subway"]["subway_gid"] == 98 
+        assert abs(data["subway"]["subway_distance"] - 1293.1) < 0.5
 
     def test_spatial_data_view_invalid_coords(self):
         res = self.testapp.get("/api/spatial_data?x=abc&y=4507520.0", status=400)
@@ -49,10 +45,8 @@ class DatabaseFunctionalTests(unittest.TestCase):
         res = self.testapp.get(
             "/api/spatial_data?x=-9239434.211335423&y=4955524.41983333", status=200
         )
-        import json
-
         data = json.loads(res.body)
-        assert data["neighborhood"] == []
+        assert data["neighborhood"] == None
         assert data["number_of_homicides"] == 0
-        assert data["station_name"] == "Tottenville"
-        assert abs(data["distance_meters"] - 741470.2135) < 0.5
+        assert data["subway"]["subway_gid"] == 478 
+        assert abs(data["subway"]["subway_distance"] - 741470.2135) < 0.5

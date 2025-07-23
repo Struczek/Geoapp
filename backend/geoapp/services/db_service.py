@@ -72,13 +72,12 @@ class DbServices:
         point_geom = self._make_transformed_point(x, y)
         neighborhood = self._get_neighborhood(point_geom)
         number_of_homicides = self._count_homicides_nearby(point_geom)
-        station_name, distance_meters = self._get_nearest_subway_station(point_geom)
+        subway = self._get_nearest_subway_station(point_geom)
 
         return {
             "neighborhood": neighborhood,
             "number_of_homicides": number_of_homicides,
-            "station_name": station_name,
-            "distance_meters": distance_meters,
+            "subway": subway,
         }
 
     def _make_transformed_point(self, x, y):
@@ -91,20 +90,17 @@ class DbServices:
         """
         Finds the neighborhood and borough that contain the given geometry point.
         """
-        stmt = select(NycNeighborhoods.name, NycNeighborhoods.boroname).where(
+        stmt = select(NycNeighborhoods.gid).where(
             func.ST_Intersects(NycNeighborhoods.geom, point_geom)
         )
         result = self.session.execute(stmt).all()
-        neighborhoods = []
 
         if result:
+            neighborhoods = []
             for row in result:
-                # Check if the neighborhood data is complete
-                if row.name is None or row.boroname is None:
-                    print(
-                        f"WARNING: Incomplete neighborhood data: name={row.name!r}, boroname={row.boroname!r}"
-                    )
-                neighborhoods.append({"name": row.name, "boroname": row.boroname})
+                neighborhoods.append({"neighborhood_gid": row.gid})
+        else:
+            neighborhoods = None
 
         return neighborhoods
 
@@ -127,7 +123,7 @@ class DbServices:
         """
         stmt = (
             select(
-                NycSubwayStations.name,
+                NycSubwayStations.gid,
                 func.ST_Distance(NycSubwayStations.geom, point_geom).label("distance"),
             ).order_by(NycSubwayStations.geom.op("<->")(point_geom))
             # Only fetch the closest station
@@ -136,11 +132,11 @@ class DbServices:
         result = self.session.execute(stmt).first()
 
         if result:
-            name, distance = result
-            # Check if the subway data is complete
-            if name is None:
-                print(f"WARNING: Incomplete subway data.")
+            response = {
+                "subway_gid":result.gid,
+                "subway_distance":result.distance
+            }
         else:
-            name, distance = None, None
+            response = None
 
-        return name, distance
+        return response
