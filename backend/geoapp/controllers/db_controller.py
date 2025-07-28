@@ -53,6 +53,33 @@ class DbController:
 
         return data
 
+    @view_config(
+        route_name="db_controller.spatial_data_view",
+        request_method="GET",
+        renderer="json",
+    )
+    def spatial_data_view(self):
+        """
+        Returns spatial data for given x, y (EPSG:3857) coordinates.
+        """
+        try:
+            x = float(self.request.params.get("x"))
+            y = float(self.request.params.get("y"))
+        except (TypeError, ValueError):
+            raise HTTPBadRequest("Invalid or missing x,y")
+
+        data = self.db_service.get_spatial_data(x, y)
+
+        self.request.response.headers.update(
+            {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            }
+        )
+
+        return data
+
     def get_filters(self, model):
         """
         Extracts valid filter parameters from the request and checks them against

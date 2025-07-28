@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import JSONB
+from geoapp.models.models import NycNeighborhoods, NycHomicides, NycSubwayStations
 
 
 class DbServices:
@@ -63,3 +64,76 @@ class DbServices:
         result = self.session.execute(geojson_query).scalar()
 
         return result
+
+    def get_spatial_data(self, x, y):
+        """
+        Retrieves spatial information for a given coordinate (by default in EPSG:3857).
+        """
+        point_geom = self._make_transformed_point(x, y)
+        neighborhoods = self._get_neighborhoods(point_geom)
+        number_of_homicides = self._count_homicides_nearby(point_geom)
+        subway = self._get_nearest_subway_station(point_geom)
+
+        return {
+            "neighborhoods": neighborhoods,
+            "number_of_homicides": number_of_homicides,
+            "subway": subway,
+        }
+
+    def _make_transformed_point(self, x, y, source_srid=3857, target_srid=26918):
+        """
+        Creates a point geometry from given coordinates (by default in EPSG:3857) and transforms it (by default to EPSG:26918).
+        """
+        return func.ST_Transform(func.ST_SetSRID(func.ST_MakePoint(x, y), source_srid), target_srid)
+
+    def _get_neighborhoods(self, point_geom):
+        """
+        Returns GIDs of neighborhoods that contain the given point geometry, or None if not found.
+        """
+        stmt = select(NycNeighborhoods.gid).where(
+            func.ST_Intersects(NycNeighborhoods.geom, point_geom)
+        )
+        result = self.session.execute(stmt).all()
+
+        if result:
+            neighborhoods = []
+            for row in result:
+                neighborhoods.append({"neighborhood_gid": row.gid})
+        else:
+            neighborhoods = None
+
+        return neighborhoods
+
+    def _count_homicides_nearby(self, point_geom, radius=100):
+        """
+        Counts the number of homicides within a specified distance from the given point geometry.
+        The default value of radius is 100 meters.
+        """
+        stmt = (
+            select(func.count())
+            .select_from(NycHomicides)
+            .where(func.ST_DWithin(NycHomicides.geom, point_geom, radius))
+        )
+
+        return self.session.execute(stmt).scalar()
+
+    def _get_nearest_subway_station(self, point_geom):
+        """
+        Returns the GID and distance in meters of the nearest subway station to the given point geometry.
+        """
+        stmt = (
+            select(
+                NycSubwayStations.gid,
+                func.ST_Distance(NycSubwayStations.geom, point_geom).label("distance"),
+            ).order_by(NycSubwayStations.geom.op("<->")(point_geom))
+            # Only fetch the closest station
+            .limit(1)
+        )
+        result = self.session.execute(stmt).first()
+
+        if result:
+            response = {"subway_gid": result.gid, "subway_distance": result.distance}
+        else:
+            response = None
+
+        return response
