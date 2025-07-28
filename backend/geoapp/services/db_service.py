@@ -70,7 +70,7 @@ class DbServices:
         Retrieves spatial information for a given coordinate in EPSG:3857.
         """
         point_geom = self._make_transformed_point(x, y)
-        neighborhood = self._get_neighborhood(point_geom)
+        neighborhood = self._get_neighborhoods(point_geom)
         number_of_homicides = self._count_homicides_nearby(point_geom)
         subway = self._get_nearest_subway_station(point_geom)
 
@@ -86,7 +86,7 @@ class DbServices:
         """
         return func.ST_Transform(func.ST_SetSRID(func.ST_MakePoint(x, y), 3857), 26918)
 
-    def _get_neighborhood(self, point_geom):
+    def _get_neighborhoods(self, point_geom):
         """
         Returns GIDs of neighborhoods that contain the given point geometry, or None if not found.
         """
