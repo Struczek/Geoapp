@@ -67,24 +67,24 @@ class DbServices:
 
     def get_spatial_data(self, x, y):
         """
-        Retrieves spatial information for a given coordinate in EPSG:3857.
+        Retrieves spatial information for a given coordinate (by default in EPSG:3857).
         """
         point_geom = self._make_transformed_point(x, y)
-        neighborhood = self._get_neighborhoods(point_geom)
+        neighborhoods = self._get_neighborhoods(point_geom)
         number_of_homicides = self._count_homicides_nearby(point_geom)
         subway = self._get_nearest_subway_station(point_geom)
 
         return {
-            "neighborhood": neighborhood,
+            "neighborhoods": neighborhoods,
             "number_of_homicides": number_of_homicides,
             "subway": subway,
         }
 
-    def _make_transformed_point(self, x, y):
+    def _make_transformed_point(self, x, y, source_srid=3857, target_srid=26918):
         """
-        Creates a point geometry from coordinates in EPSG:3857 and transforms it to EPSG:26918.
+        Creates a point geometry from given coordinates (by default in EPSG:3857) and transforms it (by default to EPSG:26918).
         """
-        return func.ST_Transform(func.ST_SetSRID(func.ST_MakePoint(x, y), 3857), 26918)
+        return func.ST_Transform(func.ST_SetSRID(func.ST_MakePoint(x, y), source_srid), target_srid)
 
     def _get_neighborhoods(self, point_geom):
         """
