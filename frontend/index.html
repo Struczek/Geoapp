@@ -1,0 +1,33 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Openlayers web map</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./libs/site/theme/ol.css">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- ol-ext -->
+    <link rel="stylesheet" href="./libs/site/ol-ext.css" />
+</head>
+
+<body>
+
+    <div id='js-map' class='map'></div>
+
+    <div class="overlay-container">
+        <span class="overlay-text" id="feature-name"></span><br>
+        <span class="overlay-text" id="feature-additional-info"></span><br>
+    </div>
+
+    <script src='./libs/site/en/latest/ol/dist/ol.js'></script>
+    <script type="text/javascript" src="./libs/site/ol-ext.js"></script>
+    <!-- https://github.com/MrRio/jsPDF -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
+    <!-- filesaver-js -->
+    <script type="text/javascript" src="https://cdn.rawgit.com/eligrey/FileSaver.js/aa9f4e0e/FileSaver.min.js"></script>
+    <script src='./main.js'></script>
+</body>
+
+</html>

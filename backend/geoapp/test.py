@@ -32,7 +32,7 @@ class DatabaseFunctionalTests(unittest.TestCase):
             "/api/spatial_data?x=-8239434.211335423&y=4955524.41983333", status=200
         )
         data = json.loads(res.body)
-        assert data["neighborhood"][0]["neighborhood_gid"] == 72
+        assert data["neighborhoods"][0]["neighborhood_gid"] == 72
         assert data["number_of_homicides"] == 0
         assert data["subway"]["subway_gid"] == 98
         assert abs(data["subway"]["subway_distance"] - 1293.1) < 0.5
@@ -46,7 +46,7 @@ class DatabaseFunctionalTests(unittest.TestCase):
             "/api/spatial_data?x=-9239434.211335423&y=4955524.41983333", status=200
         )
         data = json.loads(res.body)
-        assert data["neighborhood"] == None
+        assert data["neighborhoods"] == None
         assert data["number_of_homicides"] == 0
         assert data["subway"]["subway_gid"] == 478
         assert abs(data["subway"]["subway_distance"] - 741470.2135) < 0.5
