@@ -4,8 +4,7 @@ export function createStreetsLayer() {
   // Creates a vector image layer for New York streets from a GeoJSON endpoint with predefined styles
   const NewYorkStreets = new ol.layer.VectorImage({
     source: new ol.source.Vector({
-      url: ENDPOINTS.NYC_STREETS
-      ,
+      url: ENDPOINTS.NYC_STREETS,
       format: new ol.format.GeoJSON(),
     }),
     visible: true,

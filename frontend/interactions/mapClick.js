@@ -1,10 +1,11 @@
 import { setOverlayContent } from "../map/mapState.js";
 import { ENDPOINTS } from "../config/config.js";
 import { getCurrentMode } from "../map/mapState.js";
-import { getFeaturePropertyByGid } from "../services/featureServices.js";
+import { getFeatureByGid } from "../services/featureServices.js";
 import { map } from "../map/createMap.js";
 import { highlightSubwayStationByGid } from "../subway/subwayService.js";
 import { setPanelStyleDisplay } from "../controls/optionsControl.js";
+import { setHighlightedGid } from "../subway/subwayState.js";
 // Vector Feature
 const overlayContainerElement = document.querySelector(".overlay-container");
 export const overlayLayer = new ol.Overlay({
@@ -18,7 +19,8 @@ export function initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway) {
     // Hide any previous overlay
     overlayLayer.setPosition(undefined);
     setPanelStyleDisplay("none");
-    // panel.style.display = "none";
+    setHighlightedGid(null);
+    NewYorkSubway.changed();
 
     // If 'features' mode is active, display data from clicked vector features
     if (getCurrentMode() === "features") {
@@ -54,7 +56,7 @@ export function initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway) {
           );
           // Default case for unknown layers
         } else {
-          setOverlayContent("User layer", "No additional info");
+          setOverlayContent(layerTitle, "No additional info");
         }
 
         overlayLayer.setPosition(clickedCoordinate);
@@ -71,15 +73,13 @@ export function initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway) {
           let featureName;
           // Display neighborhood info from API if available
           if (data.neighborhoods) {
-            featureName = `${getFeaturePropertyByGid(
+            featureName = `${getFeatureByGid(
               data.neighborhoods[0].neighborhood_gid,
-              neighborhoodsSource,
-              "name"
-            )}<br>${getFeaturePropertyByGid(
+              neighborhoodsSource
+            ).get("boroname")}<br>${getFeatureByGid(
               data.neighborhoods[0].neighborhood_gid,
-              neighborhoodsSource,
-              "boroname"
-            )}`;
+              neighborhoodsSource
+            ).get("name")}`;
           } else {
             featureName = "No neighborhoods";
           }
@@ -92,18 +92,17 @@ export function initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway) {
           );
           let additionInfo = `Nearby homicides: ${
             data.number_of_homicides
-          }<br>Subway: ${getFeaturePropertyByGid(
+          }<br>Subway: ${getFeatureByGid(
             data.subway.subway_gid,
-            subwaySource,
-            "name"
-          )}<br>Distance: ${parseFloat(data.subway.subway_distance).toFixed(
-            2
-          )}m`;
+            subwaySource
+          ).get("name")}<br>Distance: ${parseFloat(
+            data.subway.subway_distance
+          ).toFixed(2)}m`;
           setOverlayContent(featureName, additionInfo);
         })
         .catch((error) => {
-          console.error("Błąd:", error);
-          setOverlayContent("Błąd podczas pobierania danych", "");
+          console.error("Error:", error);
+          setOverlayContent("Error while retrieving data", "");
         });
       overlayLayer.setPosition(clickedCoordinate);
     }

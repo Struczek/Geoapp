@@ -7,9 +7,13 @@ import { map } from "./map/createMap.js";
 import { createCluster } from "./interactions/clusters.js";
 import { initMapClick } from "./interactions/mapClick.js";
 import { createDragAndDropInteraction } from "./interactions/dragAndDrop.js";
-import { crateSubwaySearch } from "./controls/searchControl.js";
+import { createSubwaySearch } from "./controls/searchControl.js";
 import { createPrintControl } from "./controls/printControl.js";
-import { layersButton, apiButton, createClearButton } from "./controls/controlButtons.js";
+import {
+  layersButton,
+  apiButton,
+  createClearButton,
+} from "./controls/controlButtons.js";
 import { drawButton, notification } from "./controls/drawControl.js";
 import { optionsControl } from "./controls/optionsControl.js";
 window.onload = init;
@@ -38,13 +42,12 @@ function init() {
   // Control Select
   let select = new ol.interaction.Select({});
   map.addInteraction(select);
-  let subwaySearch = crateSubwaySearch(subwaySource, NewYorkSubway);
+  let subwaySearch = createSubwaySearch(subwaySource, NewYorkSubway);
   let printControl = createPrintControl();
   const controlBar = new ol.control.Bar({
     toggleOne: true,
     group: true,
   });
-
   map.addControl(notification);
   let clearButton = createClearButton(NewYorkSubway);
   controlBar.addControl(subwaySearch);
