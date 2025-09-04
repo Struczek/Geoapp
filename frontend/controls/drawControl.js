@@ -25,6 +25,7 @@ export const drawButton = new ol.control.Button({
     let vector = new ol.layer.Vector({
       source: new ol.source.Vector(),
       visible: true,
+      title: "Draw layer",
     });
     vector.set("displayInLayerSwitcher", false);
     map.addLayer(vector);

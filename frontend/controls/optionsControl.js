@@ -22,7 +22,12 @@ panel.innerHTML = `
         <option value="long_name">Long name</option>
         <option value="label">Label</option>
       </select>
-    </label>
+    </label><br/>
+      heatmap radius:
+      <input id="heatmapRadius" type="number" placeholder="100" />
+      <br/>
+      <div style="display:inline-flex;align-items:center;gap:.5rem">Heatmap style: <button id="heatmapStyleBtn" type="button"><i class="fa fa-paint-brush"></i></button></div>
+
   `;
 
 // Create a gear icon button to toggle panel visibility

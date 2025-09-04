@@ -79,3 +79,8 @@ body {
   font-size: 13px;
   margin-top: 4px;
 }
+
+/* Legend */
+.ol-control.ol-legend {
+  bottom: 2em!important;  
+}

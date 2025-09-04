@@ -14,6 +14,7 @@ export function createHomicidesLayer() {
     source: clusteredHomicideSource,
     visible: true,
     title: "Homicides",
+    maxResolution: 50,
     style: function (feature) {
       const size = feature.get("features").length;
       // If the cluster contains only one homicide incident
@@ -50,5 +51,5 @@ export function createHomicidesLayer() {
       }
     },
   });
-  return { NewYorkHomicides };
+  return { NewYorkHomicides, homicideSource };
 }
