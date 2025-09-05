@@ -23,8 +23,11 @@ panel.innerHTML = `
         <option value="label">Label</option>
       </select>
     </label><br/>
-      heatmap radius:
+      Heatmap radius:
       <input id="heatmapRadius" type="number" placeholder="100" />
+      <br/>
+      Hotspot radius:
+      <input id="hotspotRadius" type="number" placeholder="10" />
       <br/>
       <div style="display:inline-flex;align-items:center;gap:.5rem">Heatmap style: <button id="heatmapStyleBtn" type="button"><i class="fa fa-paint-brush"></i></button></div>
 

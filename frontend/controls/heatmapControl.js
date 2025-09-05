@@ -5,6 +5,10 @@ import { getHeatmapRadius } from "../map/mapState.js";
 // Defines a semi-transparent fill style for soft heatmap visualization.
 let styleSoft = new ol.style.Style({
   fill: new ol.style.Fill({ color: [255, 87, 34, 0.4] }),
+  stroke: new ol.style.Stroke({
+    color: [255, 87, 34, 1],   // kolor obwódki (pełna przezroczystość)
+    width: 2,                  // grubość obwódki
+  }),
 });
 
 
@@ -41,8 +45,10 @@ export function toggleHeatmap(homicideSource) {
 
   // Turf buffer with radius parameter
   const buffered = turf.buffer(fc, getHeatmapRadius(), { units: "meters" });
+
+  let union = turf.union(buffered);
   // GeoJSON → OL
-  const bufferedFeatures = format.readFeatures(buffered, {
+  const bufferedFeatures = format.readFeatures(union, {
     dataProjection: "EPSG:4326",
     featureProjection: map.getView().getProjection(),
   });

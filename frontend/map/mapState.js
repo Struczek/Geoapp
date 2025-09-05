@@ -55,3 +55,14 @@ export function setEndPath(value) {
 export function getEndPath() {
   return endPath;
 }
+
+export let hotspotRadius = 10;
+
+export function setHotspotRadius(value) {
+  hotspotRadius = value;
+  console.log(hotspotRadius);
+}
+
+export function getHotspotRadius() {
+  return hotspotRadius;
+}

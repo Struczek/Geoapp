@@ -17,13 +17,16 @@ import {
 import { drawButton, notification } from "./controls/drawControl.js";
 import { optionsControl } from "./controls/optionsControl.js";
 import { createHeatmapButton } from "./controls/heatMapControl.js";
-import { setHeatmapRadius } from "./map/mapState.js";
+import { setHeatmapRadius, setHotspotRadius } from "./map/mapState.js";
 import {
   toggleHeatmap,
   toggleHeatmapStyle,
 } from "./controls/heatMapControl.js";
 import { distanceButton } from "./controls/distanceControl.js";
-import { createHotspotpButton } from "./controls/hotspotControl.js";
+import {
+  createHotspotpButton,
+  toggleHotspot,
+} from "./controls/hotspotControl.js";
 import { createProximityDistanceButton } from "./controls/proximityControl.js";
 
 window.onload = init;
@@ -92,6 +95,13 @@ function init() {
       setHeatmapRadius(this.value);
       toggleHeatmap(homicideSource);
       toggleHeatmap(homicideSource);
+    });
+  document
+    .getElementById("hotspotRadius")
+    .addEventListener("change", function () {
+      setHotspotRadius(this.value);
+      toggleHotspot(homicideSource);
+      toggleHotspot(homicideSource);
     });
   document
     .getElementById("heatmapStyleBtn")
