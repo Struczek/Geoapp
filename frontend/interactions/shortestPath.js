@@ -91,8 +91,12 @@ function addSegmentsFromCoordinates(coordinates) {
   }
 }
 
-// Dijkstra: pure distance, bidirectional everywhere 
-export const dijkstraRouter = new ol.graph.Dijkstra({ source: graphSource });
+// Dijkstra: pure distance, bidirectional everywhere
+export const dijkstraRouter = new ol.graph.Dijkstra({
+  source: graphSource,
+  maxIteration: 100000000,
+  stepIteration: 1000000,
+});
 
 dijkstraRouter.weight = function () {
   return 1;

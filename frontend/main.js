@@ -82,13 +82,6 @@ function init() {
   controlBar.addControl(optionsControl);
   map.addControl(controlBar);
   map.addControl(new ol.control.ScaleLine());
-  // Update subway search to use selected property and rerun search
-  document
-    .getElementById("searchProperty")
-    .addEventListener("change", function () {
-      subwaySearch.set("property", this.value);
-      subwaySearch.search();
-    });
   document
     .getElementById("heatmapRadius")
     .addEventListener("change", function () {

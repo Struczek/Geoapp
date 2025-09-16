@@ -47,6 +47,7 @@ export function toggleHeatmap(homicideSource) {
   const buffered = turf.buffer(fc, getHeatmapRadius(), { units: "meters" });
 
   let union = turf.union(buffered);
+
   // GeoJSON → OL
   const bufferedFeatures = format.readFeatures(union, {
     dataProjection: "EPSG:4326",

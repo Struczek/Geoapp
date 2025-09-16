@@ -6,4 +6,5 @@ export const ENDPOINTS = {
   NYC_HOMICIDES: `${API_BASE_URL}/api/nyc_homicides/geojson`,
   NYC_NEIGHBORHOODS: `${API_BASE_URL}/api/nyc_neighborhoods/geojson`,
   SPATIAL_DATA: `${API_BASE_URL}/api/spatial_data`,
+  PROXIMITY: `${API_BASE_URL}/api/trace`,
 };
