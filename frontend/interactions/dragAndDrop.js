@@ -27,7 +27,8 @@ export function createDragAndDropInteraction() {
   });
   // Use the OL viewport element (most reliable for pointer events)
   const dropTarget = map.getViewport();
-
+  
+  // Handles drag and drop of ZIP files containing shapefiles
   dropTarget.addEventListener("drop", (e) => {
     e.preventDefault();
     dropTarget.classList.remove("is-dragover");

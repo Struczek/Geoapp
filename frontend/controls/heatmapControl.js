@@ -6,8 +6,8 @@ import { getHeatmapRadius } from "../map/mapState.js";
 let styleSoft = new ol.style.Style({
   fill: new ol.style.Fill({ color: [255, 87, 34, 0.4] }),
   stroke: new ol.style.Stroke({
-    color: [255, 87, 34, 1],   // kolor obwódki (pełna przezroczystość)
-    width: 2,                  // grubość obwódki
+    color: [255, 87, 34, 1],   // border color (no transparency)
+    width: 2,                  // border thickness
   }),
 });
 
@@ -38,13 +38,13 @@ export function toggleHeatmap(homicideSource) {
   const format = new ol.format.GeoJSON();
 
   // OL → GeoJSON (WGS84) for Turf
-  const fc = format.writeFeaturesObject(homicideSource.getFeatures(), {
+  const featureCollection  = format.writeFeaturesObject(homicideSource.getFeatures(), {
     featureProjection: map.getView().getProjection(),
     dataProjection: "EPSG:4326",
   });
 
   // Turf buffer with radius parameter
-  const buffered = turf.buffer(fc, getHeatmapRadius(), { units: "meters" });
+  const buffered = turf.buffer(featureCollection , getHeatmapRadius(), { units: "meters" });
 
   let union = turf.union(buffered);
 

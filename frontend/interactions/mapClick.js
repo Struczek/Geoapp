@@ -1,4 +1,5 @@
 import {
+  getEndPath,
   setCurrentMode,
   setOverlayContent,
   startPath,
@@ -122,7 +123,7 @@ export function initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway) {
               .getCoordinates()
           );
           setStartPath(clickedCoordinate);
-          let se = findShortestPath();
+          let se = findShortestPath(getStartPath(), getEndPath());
           map.addLayer(shortestPathLayer);
           let additionInfo = `Nearby homicides: ${
             data.number_of_homicides
@@ -150,7 +151,7 @@ export function initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway) {
         popEnd.show(e.coordinate);
         setTimeout(function () {
           setEndPath(e.coordinate);
-          let se = findShortestPath();
+          let se = findShortestPath(getStartPath(), getEndPath());
           if (se) {
             setStartPath(se[0]);
             setEndPath(se[1]);

@@ -128,9 +128,11 @@ dijkstraRouter.on("finish", (event) => {
   result.addFeatures(event.route);
   // Create info popup content
   const div = document.createElement("div");
-  div.textContent = `Travel distance: ${(event.distance / 1000).toFixed(
-    2
-  )} km. `;
+  if (!event.distance || event.distance === 0) {
+    div.textContent = "Route unavailable. ";
+  } else {
+    div.textContent = `Travel distance: ${(event.distance / 1000).toFixed(2)} km.`;
+  }
   const closeLink = document.createElement("a");
   closeLink.textContent = "Close";
   closeLink.addEventListener("click", function (e) {
