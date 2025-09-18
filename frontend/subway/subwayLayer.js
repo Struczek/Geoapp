@@ -1,5 +1,6 @@
 import { getHighlightedGid } from "../subway/subwayState.js";
 import { ENDPOINTS } from "../config/config.js";
+import { map } from "../map/createMap.js";
 export function createSubwayLayer() {
   // Creates a vector source for New York subway stations from a GeoJSON endpoint
   const subwaySource = new ol.source.Vector({
@@ -17,6 +18,7 @@ export function createSubwayLayer() {
     source: clusteredSubwaySource,
     visible: true,
     title: "Subway stations",
+    maxResolution: 50,
     style: function (feature) {
       const size = feature.get("features").length;
       const features = feature.get("features");

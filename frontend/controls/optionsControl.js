@@ -15,14 +15,24 @@ panel.style.minWidth = "180px";
 panel.style.fontSize = "13px";
 panel.innerHTML = `
     <strong>Options</strong><br/>
-    <label>
-      search property:
-      <select id="searchProperty">
-        <option value="name">Name</option>
-        <option value="long_name">Long name</option>
-        <option value="label">Label</option>
-      </select>
-    </label>
+    <table style="border-collapse:collapse; font-size:13px">
+    <tr>
+      <td><label for="heatmapRadius">Heatmap radius:</label></td>
+      <td><input id="heatmapRadius" type="number" placeholder="100" style="font-size:12px; padding:2px; width:90px;"/></td>
+    </tr>
+    <tr>
+      <td><label for="hotspotRadius">Hotspot radius:</label></td>
+      <td><input id="hotspotRadius" type="number" placeholder="10" style="font-size:12px; padding:2px; width:90px;" /></td>
+    </tr>
+    <tr>
+      <td>Heatmap style:</td>
+      <td>
+        <button id="heatmapStyleBtn" type="button">
+          <i class="fa fa-paint-brush"></i>
+        </button>
+      </td>
+    </tr>
+  </table>
   `;
 
 // Create a gear icon button to toggle panel visibility

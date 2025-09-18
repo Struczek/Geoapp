@@ -25,3 +25,44 @@ export function setOverlayContent(title, info) {
   overlayFeatureName.innerHTML = title ?? "";
   overlayAdditionInfo.innerHTML = info ?? "";
 }
+
+export let heatmapRadius = 100;
+
+export function setHeatmapRadius(value) {
+  heatmapRadius = value;
+}
+
+export function getHeatmapRadius() {
+  return heatmapRadius;
+}
+
+export let startPath = null;
+
+export function setStartPath(value) {
+  startPath = value;
+}
+
+export function getStartPath() {
+  return startPath;
+}
+
+export let endPath = null;
+
+export function setEndPath(value) {
+  endPath = value;
+}
+
+export function getEndPath() {
+  return endPath;
+}
+
+export let hotspotRadius = 10;
+
+export function setHotspotRadius(value) {
+  hotspotRadius = value;
+  console.log(hotspotRadius);
+}
+
+export function getHotspotRadius() {
+  return hotspotRadius;
+}

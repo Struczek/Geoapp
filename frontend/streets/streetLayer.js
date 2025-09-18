@@ -9,6 +9,7 @@ export function createStreetsLayer() {
     }),
     visible: true,
     title: "Streets",
+    maxResolution: 30,
     style: new ol.style.Style({
       fill: fillStyle,
       stroke: strokeStyle,

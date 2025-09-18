@@ -7,13 +7,19 @@ export function createSubwaySearch(subwaySource, NewYorkSubway) {
   // highlights the selected station and zooms to its location on selection
   const subwaySearch = new ol.control.SearchFeature({
     source: subwaySource,
-    property: "name",
-    sort: function (f1, f2) {
-      if (subwaySearch.getSearchString(f1) < subwaySearch.getSearchString(f2))
-        return -1;
-      if (subwaySearch.getSearchString(f1) > subwaySearch.getSearchString(f2))
-        return 1;
-      return 0;
+    property: null,
+    getSearchString: function (f) {
+      const props = f.getProperties();
+      return Object.keys(props)
+        .filter((k) => k !== "geometry")
+        .map((k) => String(props[k]))
+        .join(" ")
+        .toLowerCase();
+    },
+    sort: (f1, f2) => {
+      const s1 = subwaySearch.getSearchString(f1);
+      const s2 = subwaySearch.getSearchString(f2);
+      return s1.localeCompare(s2);
     },
   });
   // When a search result is selected, highlight the station and fit the map view to its extent

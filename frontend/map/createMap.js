@@ -1,3 +1,4 @@
+import { legendItems } from "./legendItems.js";
 // Main map function
 export const map = new ol.Map({
   view: new ol.View({
@@ -7,3 +8,16 @@ export const map = new ol.Map({
   }),
   target: "js-map",
 });
+
+const legend = new ol.legend.Legend({
+  title: "Legend",
+  margin: 5,
+  items: legendItems,
+});
+
+const legendCtrl = new ol.control.Legend({
+  legend,
+  collapsed: false,
+  margin: 5,
+});
+map.addControl(legendCtrl);

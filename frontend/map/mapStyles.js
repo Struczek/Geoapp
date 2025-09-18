@@ -17,3 +17,14 @@ export const circleStyle = new ol.style.Circle({
   radius: 7,
   stroke: strokeStyle,
 });
+
+// Defines a fill style with a blue color
+export const fillStyleRed = new ol.style.Fill({
+  color: [245, 49, 5, 1],
+});
+
+// Defines a stroke style with a blue color and specific width
+export const strokeStyleRed = new ol.style.Stroke({
+  color: [245, 49, 5, 1],
+  width: 1.2,
+});

@@ -11,6 +11,7 @@ export function createNeighborhoodsLayer() {
     source: neighborhoodsSource,
     visible: true,
     title: "Neighborhoods",
+    maxResolution: 40,
     style: new ol.style.Style({
       fill: fillStyle,
       stroke: strokeStyle,

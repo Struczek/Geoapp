@@ -16,6 +16,19 @@ import {
 } from "./controls/controlButtons.js";
 import { drawButton, notification } from "./controls/drawControl.js";
 import { optionsControl } from "./controls/optionsControl.js";
+import { createHeatmapButton } from "./controls/heatMapControl.js";
+import { setHeatmapRadius, setHotspotRadius } from "./map/mapState.js";
+import {
+  toggleHeatmap,
+  toggleHeatmapStyle,
+} from "./controls/heatMapControl.js";
+import { distanceButton } from "./controls/distanceControl.js";
+import {
+  createHotspotpButton,
+  toggleHotspot,
+} from "./controls/hotspotControl.js";
+import { createProximityDistanceButton } from "./controls/proximityControl.js";
+
 window.onload = init;
 
 function init() {
@@ -29,7 +42,7 @@ function init() {
   map.addLayer(NewYorkSubway);
   const selectCluster = createCluster();
   map.addInteraction(selectCluster);
-  const { NewYorkHomicides } = createHomicidesLayer();
+  const { NewYorkHomicides, homicideSource } = createHomicidesLayer();
   map.addLayer(NewYorkHomicides);
   initMapClick(subwaySource, neighborhoodsSource, NewYorkSubway);
   const dragAndDropInteraction = createDragAndDropInteraction();
@@ -56,14 +69,36 @@ function init() {
   controlBar.addControl(apiButton);
   controlBar.addControl(clearButton);
   controlBar.addControl(drawButton);
+  let heatmapButton = createHeatmapButton(homicideSource);
+  controlBar.addControl(heatmapButton);
+  let hotspotButton = createHotspotpButton(homicideSource);
+  controlBar.addControl(hotspotButton);
+  controlBar.addControl(distanceButton);
+  let proximityDistanceButton = createProximityDistanceButton(
+    homicideSource,
+    NewYorkStreets
+  );
+  controlBar.addControl(proximityDistanceButton);
   controlBar.addControl(optionsControl);
   map.addControl(controlBar);
   map.addControl(new ol.control.ScaleLine());
-  // Update subway search to use selected property and rerun search
   document
-    .getElementById("searchProperty")
+    .getElementById("heatmapRadius")
     .addEventListener("change", function () {
-      subwaySearch.set("property", this.value);
-      subwaySearch.search();
+      setHeatmapRadius(this.value);
+      toggleHeatmap(homicideSource);
+      toggleHeatmap(homicideSource);
+    });
+  document
+    .getElementById("hotspotRadius")
+    .addEventListener("change", function () {
+      setHotspotRadius(this.value);
+      toggleHotspot(homicideSource);
+      toggleHotspot(homicideSource);
+    });
+  document
+    .getElementById("heatmapStyleBtn")
+    .addEventListener("click", function () {
+      toggleHeatmapStyle();
     });
 }
