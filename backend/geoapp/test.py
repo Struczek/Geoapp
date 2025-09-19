@@ -57,4 +57,12 @@ class DatabaseFunctionalTests(unittest.TestCase):
         
     def test_tracing(self):
         res = self.testapp.get("/api/trace?radius=10", status=200)
-        self.assertIn(b"FeatureCollection", res.body)
+        data = json.loads(res.body)
+        assert data["type"] == "FeatureCollection"
+        feature = data["features"][0]
+        assert feature["properties"]["edge_id"] == 15537
+        assert feature["properties"]["direction"] == "start"
+        assert feature["properties"]["point_id"] == 7
+        x, y = feature["geometry"]["coordinates"][0]
+        assert abs(x - (-73.90969899999975)) < 1e-7
+        assert abs(y - 40.665628000003274) < 1e-7
