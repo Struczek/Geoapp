@@ -50,3 +50,19 @@ class DatabaseFunctionalTests(unittest.TestCase):
         assert data["number_of_homicides"] == 0
         assert data["subway"]["subway_gid"] == 478
         assert abs(data["subway"]["subway_distance"] - 741470.2135) < 0.5
+        
+    def test_tracing_invalid_radius(self):
+        res = self.testapp.get("/api/trace?radius=abc", status=400)
+        self.assertIn(b"Invalid or missing radius.", res.body)
+        
+    def test_tracing(self):
+        res = self.testapp.get("/api/trace?radius=10", status=200)
+        data = json.loads(res.body)
+        assert data["type"] == "FeatureCollection"
+        feature = data["features"][0]
+        assert feature["properties"]["edge_id"] == 15537
+        assert feature["properties"]["direction"] == "start"
+        assert feature["properties"]["point_id"] == 7
+        x, y = feature["geometry"]["coordinates"][0]
+        assert abs(x - (-73.90969899999975)) < 1e-7
+        assert abs(y - 40.665628000003274) < 1e-7

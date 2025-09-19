@@ -1,6 +1,11 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import JSONB
 from geoapp.models.models import NycNeighborhoods, NycHomicides, NycSubwayStations
+from shapely.wkt import loads as load_wkt
+from shapely.geometry import mapping
+from shapely.ops import substring
+from pyproj import Transformer
+from shapely.ops import transform
 
 
 class DbServices:
@@ -84,7 +89,9 @@ class DbServices:
         """
         Creates a point geometry from given coordinates (by default in EPSG:3857) and transforms it (by default to EPSG:26918).
         """
-        return func.ST_Transform(func.ST_SetSRID(func.ST_MakePoint(x, y), source_srid), target_srid)
+        return func.ST_Transform(
+            func.ST_SetSRID(func.ST_MakePoint(x, y), source_srid), target_srid
+        )
 
     def _get_neighborhoods(self, point_geom):
         """
@@ -137,3 +144,197 @@ class DbServices:
             response = None
 
         return response
+
+    def get_fragmented_edge_geojson(self, radius):
+        """
+        Performs network tracing: returns road segments up to radius (deafult 100 meters) in both directions from each homicide point as GeoJSON.
+        """
+        # Links each homicide location to its nearest street segment and node geometries.
+        raw_sql = self._sql_nearest_edge_for_homicides()
+
+        results = self.session.execute(raw_sql).mappings().all()
+        # Stores features
+        features = []
+
+        # Transforms geometries from EPSG:26918 (UTM zone 18N) to WGS84 (lat/lon).
+        project_to_wgs84 = Transformer.from_crs(
+            "EPSG:26918", "EPSG:4326", always_xy=True
+        ).transform
+
+        # Build GeoJSON edge fragments around each homicide point within radius.
+        for row in results:
+            features = self._process_both_directions(
+                row, radius, project_to_wgs84, features
+            )
+
+        return {"type": "FeatureCollection", "features": features}
+
+    def _sql_nearest_edge_for_homicides(self):
+        """
+        SQL query for the nearest street edge to each homicide point.
+        """
+        return text(
+            """
+            SELECT
+                p.id AS point_id,
+                e.edge_id,
+                e.start_node,
+                e.end_node,
+                ST_AsText(e.geom) AS edge,
+                ST_AsText(ST_ClosestPoint(e.geom, p.geom)) AS closest_point_on_edge,
+                ST_AsText(ns.geom) AS start_node_geom,
+                ST_AsText(ne.geom) AS end_node_geom
+            FROM
+                public.nyc_homicides p
+            JOIN LATERAL (
+                SELECT edge_id, geom, start_node, end_node
+                FROM streets_topo.edge_data
+                ORDER BY geom <-> p.geom
+                LIMIT 1
+            ) e ON TRUE
+            LEFT JOIN streets_topo.node ns ON ns.node_id = e.start_node
+            LEFT JOIN streets_topo.node ne ON ne.node_id = e.end_node
+        """
+        )
+
+    def _process_both_directions(self, row, radius, project_to_wgs84, features):
+        """
+        Process edge traversal in both directions from the closest point.
+        """
+        edge = load_wkt(row["edge"])
+        closest_point_on_edge = load_wkt(row["closest_point_on_edge"])
+        total_len = edge.length
+        fraction_along_edge = edge.project(closest_point_on_edge, normalized=True)
+        for direction, node_key in [("start", "start_node"), ("end", "end_node")]:
+            node = load_wkt(row[f"{node_key}_geom"])
+            distance_node_to_point = closest_point_on_edge.distance(node)
+
+            if direction == "start":
+                fraction = max(
+                    0.0,
+                    fraction_along_edge
+                    - (min(distance_node_to_point, radius) / total_len),
+                )
+            else:
+                fraction = min(
+                    1.0,
+                    fraction_along_edge
+                    + (min(distance_node_to_point, radius) / total_len),
+                )
+
+            features = self._process_direction(
+                row,
+                radius,
+                project_to_wgs84,
+                features,
+                node,
+                fraction,
+                direction,
+                row[node_key],
+            )
+        return features
+
+    def _process_direction(
+        self,
+        row,
+        radius,
+        project_to_wgs84,
+        features,
+        node,
+        fraction,
+        direction,
+        node_id,
+    ):
+        """
+        Extracts edge fragment toward a node and continues traversal if within radius.
+        """
+        edge = load_wkt(row["edge"])
+        closest_point_on_edge = load_wkt(row["closest_point_on_edge"])
+
+        fraction_along_edge = edge.project(closest_point_on_edge, normalized=True)
+        distance_node_to_point = closest_point_on_edge.distance(node)
+
+        fragment_base = substring(edge, fraction, fraction_along_edge, normalized=True)
+        features.append(
+            self._make_feature(fragment_base, row, direction, project_to_wgs84)
+        )
+        # Continue traversal from start node if within radius
+        if distance_node_to_point <= radius:
+            remaining = radius - distance_node_to_point
+            fragments = self._trace_from_node(node_id, remaining)
+            for fragment in fragments:
+                features.append(
+                    self._make_feature(fragment, row, direction, project_to_wgs84)
+                )
+
+        return features
+
+    def _make_feature(self, fragment, row, direction, project_to_wgs84):
+        """
+        Create a GeoJSON feature from a fragment.
+        """
+        fragment_wgs84 = transform(project_to_wgs84, fragment)
+        return {
+            "type": "Feature",
+            "geometry": mapping(fragment_wgs84),
+            "properties": {
+                "point_id": row["point_id"],
+                "edge_id": row["edge_id"],
+                "direction": direction,
+            },
+        }
+
+    def _trace_from_node(self, node_id, remaining, visited=None):
+        """
+        Recursively traces the road network from a node, collecting edge fragments up to the remaining distance.
+        """
+        if visited is None:
+            visited = set()  # Track visited edges to avoid infinite loops
+
+        fragments = []
+
+        # Fetch all edges connected to the given node
+        raw_sql = text(
+            """
+            SELECT edge_id, ST_AsText(geom) AS geom, start_node, end_node
+            FROM streets_topo.edge_data
+            WHERE start_node = :node_id OR end_node = :node_id
+        """
+        )
+        rows = self.session.execute(raw_sql, {"node_id": node_id}).mappings().all()
+
+        # Explore all connected edges and recurse if distance remains
+        for row in rows:
+            edge_key = (row["start_node"], row["end_node"], row["edge_id"])
+            if edge_key in visited:
+                continue
+            visited.add(edge_key)
+
+            geom = load_wkt(row["geom"])
+            edge_length = geom.length
+
+            next_node, edge = self._get_edge_info(
+                row, node_id, remaining, edge_length, geom
+            )
+            if edge_length > remaining:
+                fragments.append(edge)
+                continue
+
+            fragments.append(geom)
+            fragments.extend(
+                self._trace_from_node(next_node, remaining - edge_length, visited)
+            )
+
+        return fragments
+
+    def _get_edge_info(self, row, node_id, remaining, edge_length, geom):
+        """
+        Determine the next node and the traversed edge fragment.
+        """
+        if row["start_node"] == node_id:
+            next_node = row["end_node"]
+            edge = substring(geom, 0, remaining)
+        else:
+            next_node = row["start_node"]
+            edge = substring(geom, edge_length - remaining, edge_length)
+        return next_node, edge

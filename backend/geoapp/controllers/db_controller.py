@@ -113,3 +113,26 @@ class DbController:
             )
 
         return filters
+
+    @view_config(
+        route_name="db_controller.get_tracing",
+        request_method="GET",
+        renderer="json",
+    )
+    def get_tracing(self):
+        try:
+            radius = int(self.request.params.get("radius"))
+        except (TypeError, ValueError):
+            raise HTTPBadRequest("Invalid or missing radius.")
+
+        response = self.db_service.get_fragmented_edge_geojson(radius)
+
+        self.request.response.headers.update(
+            {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+            }
+        )
+
+        return response
